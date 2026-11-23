@@ -6,14 +6,22 @@ export const testUser = {
   password: 'test',
 }
 
+/** Datos con los que se crea el usuario de prueba (admin, para poder usar el panel). */
+const testUserData = {
+  ...testUser,
+  nombre: 'Dev',
+  role: 'admin' as const,
+}
+
 /**
  * Seeds a test user for e2e admin tests.
  */
 export async function seedTestUser(): Promise<void> {
   const payload = await getPayload({ config })
 
-  // Delete existing test user if any
-  await payload.delete({
+  // Delete existing test user if any. Directo en la base (sin hooks): la protección
+  // del último admin bloquearía el borrado si este fuera el único admin.
+  await payload.db.deleteMany({
     collection: 'users',
     where: {
       email: {
@@ -25,7 +33,7 @@ export async function seedTestUser(): Promise<void> {
   // Create fresh test user
   await payload.create({
     collection: 'users',
-    data: testUser,
+    data: testUserData,
   })
 }
 
@@ -35,7 +43,7 @@ export async function seedTestUser(): Promise<void> {
 export async function cleanupTestUser(): Promise<void> {
   const payload = await getPayload({ config })
 
-  await payload.delete({
+  await payload.db.deleteMany({
     collection: 'users',
     where: {
       email: {
